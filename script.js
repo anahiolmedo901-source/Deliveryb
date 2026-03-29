@@ -49,9 +49,6 @@
   var elMsgConfirm = document.getElementById('msg-confirm');
   var elHeaderCarrito = document.getElementById('header-carrito');
   var elCartMeta = document.getElementById('cart-chip-meta');
-  var elNavLocales = document.getElementById('nav-locales');
-  var elNavMenu = document.getElementById('nav-menu');
-  var elNavPedido = document.getElementById('nav-pedido');
   var elHintVacio = document.getElementById('hint-carrito-vacio');
   var elFormCheckout = document.getElementById('form-checkout');
   var elFormError = document.getElementById('form-error');
@@ -69,22 +66,33 @@
     if (items === 0) {
       elCartMeta.textContent = 'Vacío';
       elHeaderCarrito.disabled = true;
-      elNavPedido.disabled = true;
     } else {
-      elCartMeta.textContent = items + ' · ' + formatEuros(totalPedido());
+      var u = items === 1 ? 'producto' : 'productos';
+      elCartMeta.textContent = items + ' ' + u + ' · ' + formatEuros(totalPedido());
       elHeaderCarrito.disabled = false;
-      elNavPedido.disabled = false;
     }
   }
 
-  function actualizarNavActiva(panel) {
-    elNavLocales.classList.toggle('active', panel === elStepRest);
-    elNavMenu.classList.toggle('active', panel === elStepProd);
-    elNavPedido.classList.toggle(
-      'active',
-      panel === elStepRes || panel === elStepCheckout
-    );
-    elNavMenu.disabled = !restauranteActual;
+  function sincronizarCantidadPlatoEnMenu(idPlato) {
+    var wrap = elListaPlatos.querySelector('[data-plato-qty="' + idPlato + '"]');
+    if (!wrap) return;
+    var linea = lineaPedido(idPlato);
+    var n = linea ? linea.cantidad : 0;
+    var badge = wrap.querySelector('.plato-en-pedido__badge');
+    if (n > 0) {
+      wrap.hidden = false;
+      badge.textContent = String(n);
+    } else {
+      wrap.hidden = true;
+      badge.textContent = '0';
+    }
+  }
+
+  function refrescarCantidadesMenu() {
+    var platos = MENU[restauranteActual] || [];
+    for (var i = 0; i < platos.length; i++) {
+      sincronizarCantidadPlatoEnMenu(platos[i].id);
+    }
   }
 
   function mostrarSoloPanel(panel) {
@@ -96,8 +104,10 @@
       p.hidden = !on;
     }
     actualizarIndicadoresPasos(panel);
-    actualizarNavActiva(panel);
     actualizarCarritoHeader();
+    if (panel === elStepProd) {
+      refrescarCantidadesMenu();
+    }
     if (panel !== elStepRes) {
       elHintVacio.hidden = true;
     }
@@ -184,6 +194,12 @@
         '" width="56" height="56" alt="">' +
         '<div class="plato-info"><span class="plato-nombre">' +
         escapeHtml(pl.nombre) +
+        '</span>' +
+        '<span class="plato-en-pedido" data-plato-qty="' +
+        pl.id +
+        '" hidden aria-live="polite">' +
+        '<span class="plato-en-pedido__badge" aria-hidden="true">0</span>' +
+        '<span class="plato-en-pedido__txt"> en tu pedido</span>' +
         '</span></div>' +
         '<span class="plato-precio">' +
         formatEuros(pl.precio) +
@@ -199,6 +215,7 @@
         '"><span class="btn-add__plus">+</span><span class="btn-add__txt">Agregar</span></button>';
       elListaPlatos.appendChild(li);
     }
+    refrescarCantidadesMenu();
     mostrarSoloPanel(elStepProd);
   }
 
@@ -227,6 +244,7 @@
       });
     }
     actualizarCarritoHeader();
+    sincronizarCantidadPlatoEnMenu(idPlato);
   }
 
   function totalPedido() {
@@ -327,20 +345,6 @@
     irAResumen();
   });
 
-  elNavLocales.addEventListener('click', function () {
-    mostrarSoloPanel(elStepRest);
-  });
-
-  elNavMenu.addEventListener('click', function () {
-    if (elNavMenu.disabled) return;
-    if (restauranteActual) abrirMenu(restauranteActual);
-  });
-
-  elNavPedido.addEventListener('click', function () {
-    if (elNavPedido.disabled) return;
-    irAResumen();
-  });
-
   elFormCheckout.addEventListener('submit', function (e) {
     e.preventDefault();
     var nombre = document.getElementById('co-nombre').value.trim();
@@ -392,5 +396,4 @@
 
   filtrarRestaurantes();
   actualizarCarritoHeader();
-  actualizarNavActiva(elStepRest);
 })();

@@ -104,11 +104,6 @@ body[data-ab-variant="b"] .btn-primary:hover {
   background: var(--accent-hover);
 }
 
-body[data-ab-variant="b"] .nav-pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
 body[data-ab-variant="b"] .cart-chip:hover:not(:disabled) {
   border-color: rgba(255, 255, 255, 0.35);
 }

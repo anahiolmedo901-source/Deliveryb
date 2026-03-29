@@ -67,9 +67,14 @@ body {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.header-bar .cart-chip {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .header-brand {
@@ -99,42 +104,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.75;
-}
-
-.main-nav {
-  display: flex;
-  gap: 0.35rem;
-  flex: 1;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.nav-pill {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 0.4rem 0.75rem;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.nav-pill:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.nav-pill:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.nav-pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
 }
 
 .cart-chip {
@@ -454,11 +423,50 @@ body {
 .plato-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
 }
 
 .plato-nombre {
   font-weight: 700;
   font-size: 1rem;
+}
+
+.plato-en-pedido {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1.2;
+}
+
+.plato-en-pedido__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 800;
+  border: 2px solid var(--accent);
+}
+
+.plato-en-pedido__txt {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.plato-en-pedido[hidden] {
+  display: none !important;
 }
 
 .plato-precio {
@@ -748,14 +756,6 @@ body {
 }
 
 @media (min-width: 640px) {
-  .header-bar {
-    flex-wrap: nowrap;
-  }
-
-  .main-nav {
-    justify-content: center;
-  }
-
   .stepper__label {
     font-size: 0.7rem;
     max-width: none;
