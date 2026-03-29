@@ -1,6 +1,5 @@
 /**
  * prototipo-delivery-b/script.js — Variante B (A/B)
- * Misma lógica que delivery base; UI diferenciada por styles-ab-b.css + HTML.
  */
 
 (function () {
@@ -13,7 +12,6 @@
     { id: 'r4', nombre: 'Mamma Mia Express', categoria: 'pizza', img: './assets/rest-r4.svg' }
   ];
 
-  /** Platos por restaurante (cada uno con imagen en ./assets/) */
   var MENU = {
     r1: [
       { id: 'm1', nombre: 'Margarita', precio: 8.5, img: './assets/dish-m1.svg' },
@@ -34,7 +32,6 @@
   };
 
   var restauranteActual = null;
-  /** pedido: { idPlato, nombre, precioUnit, cantidad } */
   var pedido = [];
 
   var elFiltro = document.getElementById('filtro-cat');
@@ -42,6 +39,7 @@
   var elStepRest = document.getElementById('step-restaurante');
   var elStepProd = document.getElementById('step-productos');
   var elStepRes = document.getElementById('step-resumen');
+  var elStepCheckout = document.getElementById('step-checkout');
   var elStepConf = document.getElementById('step-confirmacion');
   var elTituloRest = document.getElementById('titulo-restaurante');
   var elListaPlatos = document.getElementById('lista-platos');
@@ -49,9 +47,48 @@
   var elResumenVacio = document.getElementById('resumen-vacio');
   var elTotal = document.getElementById('total-delivery');
   var elMsgConfirm = document.getElementById('msg-confirm');
+  var elHeaderCarrito = document.getElementById('header-carrito');
+  var elCartMeta = document.getElementById('cart-chip-meta');
+  var elNavLocales = document.getElementById('nav-locales');
+  var elNavMenu = document.getElementById('nav-menu');
+  var elNavPedido = document.getElementById('nav-pedido');
+  var elHintVacio = document.getElementById('hint-carrito-vacio');
+  var elFormCheckout = document.getElementById('form-checkout');
+  var elFormError = document.getElementById('form-error');
+
+  function cuentaItems() {
+    var n = 0;
+    for (var i = 0; i < pedido.length; i++) {
+      n += pedido[i].cantidad;
+    }
+    return n;
+  }
+
+  function actualizarCarritoHeader() {
+    var items = cuentaItems();
+    if (items === 0) {
+      elCartMeta.textContent = 'Vacío';
+      elHeaderCarrito.disabled = true;
+      elNavPedido.disabled = true;
+    } else {
+      elCartMeta.textContent = items + ' · ' + formatEuros(totalPedido());
+      elHeaderCarrito.disabled = false;
+      elNavPedido.disabled = false;
+    }
+  }
+
+  function actualizarNavActiva(panel) {
+    elNavLocales.classList.toggle('active', panel === elStepRest);
+    elNavMenu.classList.toggle('active', panel === elStepProd);
+    elNavPedido.classList.toggle(
+      'active',
+      panel === elStepRes || panel === elStepCheckout
+    );
+    elNavMenu.disabled = !restauranteActual;
+  }
 
   function mostrarSoloPanel(panel) {
-    var panels = [elStepRest, elStepProd, elStepRes, elStepConf];
+    var panels = [elStepRest, elStepProd, elStepRes, elStepCheckout, elStepConf];
     for (var i = 0; i < panels.length; i++) {
       var p = panels[i];
       var on = p === panel;
@@ -59,20 +96,33 @@
       p.hidden = !on;
     }
     actualizarIndicadoresPasos(panel);
+    actualizarNavActiva(panel);
+    actualizarCarritoHeader();
+    if (panel !== elStepRes) {
+      elHintVacio.hidden = true;
+    }
+    if (panel !== elStepCheckout) {
+      elFormError.hidden = true;
+      elFormError.textContent = '';
+    }
   }
 
   function actualizarIndicadoresPasos(panel) {
-    var n = '0';
+    var n = '1';
     if (panel === elStepRest) n = '1';
-    if (panel === elStepProd) n = '2';
-    if (panel === elStepRes) n = '3';
-    if (panel === elStepConf) n = '3';
+    else if (panel === elStepProd) n = '2';
+    else if (panel === elStepRes) n = '3';
+    else if (panel === elStepCheckout) n = '4';
+    else if (panel === elStepConf) n = '5';
 
     var indicadores = document.querySelectorAll('[data-step-indicator]');
+    var stepNum = parseInt(n, 10);
     for (var i = 0; i < indicadores.length; i++) {
       var el = indicadores[i];
-      var step = el.getAttribute('data-step-indicator');
-      el.classList.toggle('active', step === n || (panel === elStepConf && step === '3'));
+      var s = parseInt(el.getAttribute('data-step-indicator'), 10);
+      el.classList.remove('active', 'done');
+      if (s < stepNum) el.classList.add('done');
+      else if (s === stepNum) el.classList.add('active');
     }
   }
 
@@ -94,11 +144,16 @@
         '<span class="card-rest__body"><strong>' +
         escapeHtml(r.nombre) +
         '</strong><span class="tag">' +
-        escapeHtml(r.categoria) +
+        etiquetaCategoria(r.categoria) +
         '</span></span>';
       li.appendChild(btn);
       elListaRest.appendChild(li);
     }
+  }
+
+  function etiquetaCategoria(c) {
+    var map = { pizza: 'Pizza', asiatica: 'Asiática', hamburguesas: 'Hamburguesas' };
+    return map[c] || c;
   }
 
   function escapeHtml(s) {
@@ -126,14 +181,14 @@
       li.innerHTML =
         '<img class="plato-thumb" src="' +
         pl.img +
-        '" width="52" height="52" alt="">' +
+        '" width="56" height="56" alt="">' +
         '<div class="plato-info"><span class="plato-nombre">' +
         escapeHtml(pl.nombre) +
         '</span></div>' +
         '<span class="plato-precio">' +
         formatEuros(pl.precio) +
         '</span>' +
-        '<button type="button" class="btn-mini" data-add-plato="' +
+        '<button type="button" class="btn-add" data-add-plato="' +
         pl.id +
         '" data-nombre="' +
         escapeAttr(pl.nombre) +
@@ -141,7 +196,7 @@
         pl.precio +
         '" data-img="' +
         escapeAttr(pl.img) +
-        '">+</button>';
+        '"><span class="btn-add__plus">+</span><span class="btn-add__txt">Agregar</span></button>';
       elListaPlatos.appendChild(li);
     }
     mostrarSoloPanel(elStepProd);
@@ -171,6 +226,7 @@
         img: img
       });
     }
+    actualizarCarritoHeader();
   }
 
   function totalPedido() {
@@ -199,7 +255,7 @@
       li.innerHTML =
         '<img class="resumen-thumb" src="' +
         l.img +
-        '" width="40" height="40" alt="">' +
+        '" width="44" height="44" alt="">' +
         '<span class="resumen-nombre">' +
         escapeHtml(l.nombre) +
         ' × ' +
@@ -210,6 +266,12 @@
       elListaResumen.appendChild(li);
     }
     elTotal.textContent = formatEuros(totalPedido());
+    actualizarCarritoHeader();
+  }
+
+  function irAResumen() {
+    pintarResumen();
+    mostrarSoloPanel(elStepRes);
   }
 
   elListaRest.addEventListener('click', function (e) {
@@ -228,15 +290,19 @@
     var precio = parseFloat(b.getAttribute('data-precio'), 10);
     var imgPlato = b.getAttribute('data-img') || '';
     agregarPlato(id, nombre, precio, imgPlato);
+    b.classList.add('btn-add--pulse');
+    window.setTimeout(function () {
+      b.classList.remove('btn-add--pulse');
+    }, 350);
   });
 
   document.getElementById('btn-volver-rest').addEventListener('click', function () {
     mostrarSoloPanel(elStepRest);
   });
 
-  document.getElementById('btn-carrito').addEventListener('click', function () {
-    pintarResumen();
-    mostrarSoloPanel(elStepRes);
+  elHeaderCarrito.addEventListener('click', function () {
+    if (elHeaderCarrito.disabled) return;
+    irAResumen();
   });
 
   document.getElementById('btn-seguir-comprando').addEventListener('click', function () {
@@ -244,11 +310,53 @@
     else mostrarSoloPanel(elStepRest);
   });
 
-  document.getElementById('btn-comprar').addEventListener('click', function () {
+  document.getElementById('btn-ir-checkout').addEventListener('click', function () {
     if (pedido.length === 0) {
-      alert('Añada al menos un plato antes de confirmar.');
+      elHintVacio.hidden = false;
       return;
     }
+    elHintVacio.hidden = true;
+    mostrarSoloPanel(elStepCheckout);
+  });
+
+  document.getElementById('btn-volver-resumen').addEventListener('click', function () {
+    irAResumen();
+  });
+
+  document.getElementById('btn-cancelar-checkout').addEventListener('click', function () {
+    irAResumen();
+  });
+
+  elNavLocales.addEventListener('click', function () {
+    mostrarSoloPanel(elStepRest);
+  });
+
+  elNavMenu.addEventListener('click', function () {
+    if (elNavMenu.disabled) return;
+    if (restauranteActual) abrirMenu(restauranteActual);
+  });
+
+  elNavPedido.addEventListener('click', function () {
+    if (elNavPedido.disabled) return;
+    irAResumen();
+  });
+
+  elFormCheckout.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var nombre = document.getElementById('co-nombre').value.trim();
+    var tel = document.getElementById('co-tel').value.trim();
+    var dir = document.getElementById('co-dir').value.trim();
+    if (!nombre || !tel || !dir) {
+      elFormError.textContent = 'Completá nombre, teléfono y dirección.';
+      elFormError.hidden = false;
+      return;
+    }
+    if (pedido.length === 0) {
+      elFormError.textContent = 'Tu carrito quedó vacío. Volvé al menú.';
+      elFormError.hidden = false;
+      return;
+    }
+    elFormError.hidden = true;
     var nombreRest = '';
     for (var i = 0; i < RESTAURANTES.length; i++) {
       if (RESTAURANTES[i].id === restauranteActual) {
@@ -256,14 +364,24 @@
         break;
       }
     }
-    elMsgConfirm.textContent =
-      'Su pedido en ' +
-      nombreRest +
-      ' por ' +
+    var pago = elFormCheckout.querySelector('input[name="pago"]:checked');
+    var pagoTxt = pago && pago.value === 'tarjeta' ? 'Tarjeta (simulado)' : 'Efectivo';
+    elMsgConfirm.innerHTML =
+      'Recibimos tu pedido en <strong>' +
+      escapeHtml(nombreRest) +
+      '</strong> por <strong>' +
       formatEuros(totalPedido()) +
-      ' está en preparación. Tiempo aproximado: 35 minutos.';
+      '</strong>. ' +
+      'Entrega a nombre de <strong>' +
+      escapeHtml(nombre) +
+      '</strong> — pago: ' +
+      escapeHtml(pagoTxt) +
+      '. Tiempo aproximado: <strong>35 min</strong>.';
     pedido = [];
     pintarResumen();
+    elFormCheckout.reset();
+    var efectivo = elFormCheckout.querySelector('input[name="pago"][value="efectivo"]');
+    if (efectivo) efectivo.checked = true;
     mostrarSoloPanel(elStepConf);
   });
 
@@ -273,4 +391,6 @@
   });
 
   filtrarRestaurantes();
+  actualizarCarritoHeader();
+  actualizarNavActiva(elStepRest);
 })();
