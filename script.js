@@ -75,9 +75,13 @@
 
   function sincronizarCantidadPlatoEnMenu(idPlato) {
     var wrap = elListaPlatos.querySelector('[data-plato-qty="' + idPlato + '"]');
-    if (!wrap) return;
+    var btnMinus = elListaPlatos.querySelector('[data-remove-plato="' + idPlato + '"]');
     var linea = lineaPedido(idPlato);
     var n = linea ? linea.cantidad : 0;
+    if (btnMinus) {
+      btnMinus.disabled = n <= 0;
+    }
+    if (!wrap) return;
     var badge = wrap.querySelector('.plato-en-pedido__badge');
     if (n > 0) {
       wrap.hidden = false;
@@ -204,7 +208,13 @@
         '<span class="plato-precio">' +
         formatEuros(pl.precio) +
         '</span>' +
-        '<button type="button" class="btn-add" data-add-plato="' +
+        '<div class="plato-qty-controls">' +
+        '<button type="button" class="btn-qty btn-qty--minus" data-remove-plato="' +
+        pl.id +
+        '" disabled aria-label="Quitar una unidad de ' +
+        escapeAttr(pl.nombre) +
+        '">−</button>' +
+        '<button type="button" class="btn-qty btn-qty--plus btn-add" data-add-plato="' +
         pl.id +
         '" data-nombre="' +
         escapeAttr(pl.nombre) +
@@ -212,7 +222,10 @@
         pl.precio +
         '" data-img="' +
         escapeAttr(pl.img) +
-        '"><span class="btn-add__plus">+</span><span class="btn-add__txt">Agregar</span></button>';
+        '" aria-label="Agregar una unidad de ' +
+        escapeAttr(pl.nombre) +
+        '"><span class="btn-add__plus">+</span><span class="btn-add__txt">Agregar</span></button>' +
+        '</div>';
       elListaPlatos.appendChild(li);
     }
     refrescarCantidadesMenu();
@@ -230,6 +243,17 @@
     return null;
   }
 
+  function postPedidoCambiado() {
+    if (!elStepRes.hidden) {
+      pintarResumen();
+      return;
+    }
+    actualizarCarritoHeader();
+    if (!elStepProd.hidden) {
+      refrescarCantidadesMenu();
+    }
+  }
+
   function agregarPlato(idPlato, nombre, precio, img) {
     var linea = lineaPedido(idPlato);
     if (linea) {
@@ -243,8 +267,21 @@
         img: img
       });
     }
-    actualizarCarritoHeader();
-    sincronizarCantidadPlatoEnMenu(idPlato);
+    postPedidoCambiado();
+  }
+
+  function quitarUnidad(idPlato) {
+    var linea = lineaPedido(idPlato);
+    if (!linea) return;
+    linea.cantidad -= 1;
+    if (linea.cantidad <= 0) {
+      var next = [];
+      for (var i = 0; i < pedido.length; i++) {
+        if (pedido[i].idPlato !== idPlato) next.push(pedido[i]);
+      }
+      pedido = next;
+    }
+    postPedidoCambiado();
   }
 
   function totalPedido() {
@@ -274,11 +311,32 @@
         '<img class="resumen-thumb" src="' +
         l.img +
         '" width="44" height="44" alt="">' +
+        '<div class="resumen-line__body">' +
         '<span class="resumen-nombre">' +
         escapeHtml(l.nombre) +
-        ' × ' +
+        '</span>' +
+        '<div class="resumen-qty-controls">' +
+        '<button type="button" class="btn-qty btn-qty--minus" data-resumen-min="' +
+        l.idPlato +
+        '" aria-label="Quitar una unidad de ' +
+        escapeAttr(l.nombre) +
+        '">−</button>' +
+        '<span class="resumen-qty-num">' +
         l.cantidad +
-        '</span><span class="resumen-precio">' +
+        '</span>' +
+        '<button type="button" class="btn-qty btn-qty--plus" data-resumen-plus="' +
+        l.idPlato +
+        '" data-nombre="' +
+        escapeAttr(l.nombre) +
+        '" data-precio="' +
+        l.precioUnit +
+        '" data-img="' +
+        escapeAttr(l.img) +
+        '" aria-label="Agregar una unidad de ' +
+        escapeAttr(l.nombre) +
+        '">+</button>' +
+        '</div></div>' +
+        '<span class="resumen-precio">' +
         formatEuros(l.precioUnit * l.cantidad) +
         '</span>';
       elListaResumen.appendChild(li);
@@ -301,6 +359,12 @@
   elFiltro.addEventListener('change', filtrarRestaurantes);
 
   elListaPlatos.addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-remove-plato]');
+    if (rm) {
+      if (rm.disabled) return;
+      quitarUnidad(rm.getAttribute('data-remove-plato'));
+      return;
+    }
     var b = e.target.closest('[data-add-plato]');
     if (!b) return;
     var id = b.getAttribute('data-add-plato');
@@ -312,6 +376,27 @@
     window.setTimeout(function () {
       b.classList.remove('btn-add--pulse');
     }, 350);
+  });
+
+  elListaResumen.addEventListener('click', function (e) {
+    var minB = e.target.closest('[data-resumen-min]');
+    if (minB) {
+      quitarUnidad(minB.getAttribute('data-resumen-min'));
+      return;
+    }
+    var plusB = e.target.closest('[data-resumen-plus]');
+    if (plusB) {
+      agregarPlato(
+        plusB.getAttribute('data-resumen-plus'),
+        plusB.getAttribute('data-nombre'),
+        parseFloat(plusB.getAttribute('data-precio'), 10),
+        plusB.getAttribute('data-img') || ''
+      );
+      plusB.classList.add('btn-add--pulse');
+      window.setTimeout(function () {
+        plusB.classList.remove('btn-add--pulse');
+      }, 350);
+    }
   });
 
   document.getElementById('btn-volver-rest').addEventListener('click', function () {

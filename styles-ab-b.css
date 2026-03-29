@@ -117,7 +117,8 @@ body[data-ab-variant="b"] .toolbar select:focus {
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2);
 }
 
-body[data-ab-variant="b"] .field input:focus,
+body[data-ab-variant="b"]
+  .field input:not([type="radio"]):not([type="checkbox"]):focus,
 body[data-ab-variant="b"] .field textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2);

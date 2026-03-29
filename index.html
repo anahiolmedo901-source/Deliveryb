@@ -108,7 +108,7 @@
             </button>
             <h2 id="titulo-restaurante">Menú</h2>
             <p class="lead subtle">
-              Cada plato muestra cuántas unidades llevás en el pedido. El total también aparece en el carrito arriba a la derecha.
+              Usá <span class="kbd">−</span> y <span class="kbd">+</span> para sacar o agregar unidades. El total se actualiza en el carrito.
             </p>
           </div>
         </header>
@@ -119,7 +119,7 @@
         <header class="panel-head">
           <h2 id="titulo-resumen">Revisá tu pedido</h2>
           <p class="lead">
-            Confirmá platos y total. Si falta algo, volvé al menú sin perder lo que ya agregaste.
+            Ajustá cantidades con <span class="kbd">−</span> y <span class="kbd">+</span> o volvé al menú para seguir eligiendo.
           </p>
         </header>
         <ul id="lista-resumen" class="lista-resumen"></ul>
@@ -194,16 +194,18 @@
               placeholder="Timbre, referencias, alergias…"
             ></textarea>
           </div>
-          <fieldset class="field field--inline">
+          <fieldset class="field field--pago">
             <legend>Método de pago</legend>
-            <label class="radio-row">
-              <input type="radio" name="pago" value="efectivo" checked />
-              Efectivo al recibir
-            </label>
-            <label class="radio-row">
-              <input type="radio" name="pago" value="tarjeta" />
-              Tarjeta en la app (simulado)
-            </label>
+            <div class="pago-opciones">
+              <label class="radio-row">
+                <input type="radio" name="pago" value="efectivo" checked />
+                <span>Efectivo al recibir</span>
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="pago" value="tarjeta" />
+                <span>Tarjeta en la app (simulado)</span>
+              </label>
+            </div>
           </fieldset>
           <p id="form-error" class="form-hint warning" role="alert" hidden></p>
           <div class="actions actions--split">

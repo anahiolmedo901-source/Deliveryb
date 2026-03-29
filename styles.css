@@ -406,8 +406,16 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
   padding: 0.85rem 0;
   border-bottom: 1px solid var(--border);
+}
+
+.plato-qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .plato-thumb {
@@ -474,6 +482,43 @@ body {
   color: var(--accent);
   font-weight: 700;
   white-space: nowrap;
+}
+
+.btn-qty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 0.5rem;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s, transform 0.12s;
+}
+
+.btn-qty--minus {
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.btn-qty--minus:hover:not(:disabled) {
+  border-color: var(--muted);
+  background: var(--bg);
+}
+
+.btn-qty--minus:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.btn-qty--plus.btn-add {
+  min-width: auto;
+  height: 2.5rem;
 }
 
 .btn-add {
@@ -545,11 +590,37 @@ body {
 
 .resumen-line {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.65rem;
-  padding: 0.55rem 0;
+  padding: 0.65rem 0;
   border-bottom: 1px dashed var(--border);
+}
+
+.resumen-line__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resumen-qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.resumen-qty-num {
+  min-width: 1.75rem;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.resumen-line .resumen-precio {
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .resumen-thumb {
@@ -563,9 +634,8 @@ body {
 }
 
 .resumen-nombre {
-  flex: 1;
-  min-width: 0;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .resumen-precio {
@@ -667,7 +737,7 @@ body {
   color: var(--text);
 }
 
-.field input,
+.field input:not([type="radio"]):not([type="checkbox"]),
 .field textarea {
   width: 100%;
   padding: 0.6rem 0.7rem;
@@ -678,32 +748,60 @@ body {
   color: var(--text);
 }
 
-.field input:focus,
+.field
+  input:not([type="radio"]):not([type="checkbox"]):focus,
 .field textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(6, 193, 103, 0.2);
 }
 
-.field--inline {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1rem;
-  background: var(--bg-elevated);
+.field--pago {
+  border: 0;
+  margin: 0 0 1rem;
+  padding: 0;
+  min-width: 0;
 }
 
-.field--inline legend {
-  padding: 0 0.35rem;
+.field--pago legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  float: none;
+}
+
+.field--pago .pago-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-elevated);
 }
 
 .radio-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
   font-weight: 500;
   font-size: 0.92rem;
-  margin: 0.35rem 0;
+  line-height: 1.35;
+  margin: 0;
+  padding: 0.35rem 0.15rem;
   cursor: pointer;
+}
+
+.radio-row input[type="radio"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.radio-row span {
+  flex: 1;
+  min-width: 0;
 }
 
 .form-hint {
